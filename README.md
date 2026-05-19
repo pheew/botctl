@@ -206,11 +206,18 @@ my-bot/
   workspace/
 ```
 
+### Shared Instructions
+
+Ambient operational rules that should apply to every bot (e.g. "don't use `sleep` in bash", helper-script locations, project conventions) can live in `~/.botctl/AGENTS.md`. If present, its contents are appended to each bot's system prompt under a `## Shared Instructions` heading. The file is re-read on every run, so edits take effect without restarting bots. Missing file = no change.
+
+This is intended for rules that should always be in context — unlike skills, which are loaded on-demand per task.
+
 ## File Layout
 
 ```
 ~/.botctl/
   botctl.db              # SQLite database
+  AGENTS.md              # Shared instructions (optional)
   workspace/             # Shared workspace
   bots/
     my-bot/

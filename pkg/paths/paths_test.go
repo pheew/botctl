@@ -148,6 +148,15 @@ func TestGlobalSkillsDir(t *testing.T) {
 	}
 }
 
+func TestAgentsFile(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("BOTCTL_HOME", tmp)
+	want := filepath.Join(tmp, "AGENTS.md")
+	if got := AgentsFile(); got != want {
+		t.Errorf("AgentsFile() = %q, want %q", got, want)
+	}
+}
+
 func TestEnsureDirs(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("BOTCTL_HOME", tmp)
@@ -200,6 +209,7 @@ func TestAllPathsRespectBotctlHome(t *testing.T) {
 		{"DBFile", DBFile(), filepath.Join(tmp, "data", "botctl.db")},
 		{"StateDir", StateDir(), filepath.Join(tmp, "run")},
 		{"GlobalSkillsDir", GlobalSkillsDir(), filepath.Join(tmp, "skills")},
+		{"AgentsFile", AgentsFile(), filepath.Join(tmp, "AGENTS.md")},
 	}
 
 	for _, tt := range tests {

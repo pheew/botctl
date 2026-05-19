@@ -56,6 +56,9 @@ func AgentsSkillsDir() string {
 // GlobalSkillsDir returns the botctl-wide shared skills directory.
 func GlobalSkillsDir() string { return filepath.Join(HomeDir(), "skills") }
 
+// AgentsFile returns the path to the shared instructions file loaded into every bot's system prompt.
+func AgentsFile() string { return filepath.Join(HomeDir(), "AGENTS.md") }
+
 // EnsureDirs creates all required directories.
 func EnsureDirs() error {
 	for _, d := range []string{BotsDir(), WorkspaceDir(), DataDir()} {
