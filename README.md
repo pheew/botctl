@@ -210,7 +210,7 @@ my-bot/
 
 Ambient operational rules that should apply to every bot (e.g. "don't use `sleep` in bash", helper-script locations, project conventions) can live in `~/.botctl/AGENTS.md`. If present, its contents are appended to each bot's system prompt under a `## Shared Instructions` heading. The file is re-read on every run, so edits take effect without restarting bots. Missing file = no change.
 
-This is intended for rules that should always be in context — unlike skills, which are loaded on-demand per task.
+Keep it short — the content is sent on every run, on every bot. Prefer skills for anything large or task-specific.
 
 ## File Layout
 

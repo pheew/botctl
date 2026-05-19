@@ -506,6 +506,7 @@ footer {
       <a href="#frontmatter" class="sidebar-link">Frontmatter Fields</a>
       <a href="#backends" class="sidebar-link">Backends</a>
       <a href="#skills" class="sidebar-link">Skills</a>
+      <a href="#shared-instructions" class="sidebar-link">Shared Instructions</a>
       <a href="#workspaces" class="sidebar-link">Workspaces</a>
       <a href="#env" class="sidebar-link">Environment</a>
     </div>
@@ -701,6 +702,21 @@ Installing skills from montanaflynn/agent-skills...
       </div>
     </section>
 
+    <!-- Shared Instructions -->
+    <section class="docs-section" id="shared-instructions">
+      <div class="section-label">Shared Instructions</div>
+      <p>Ambient operational rules that should apply to every bot — things like <em>"don't use <code>sleep</code> in bash"</em>, helper-script locations, or project-wide conventions — can live in a single file at <code>~/.botctl/AGENTS.md</code>. If present, its contents are appended to each bot's system prompt under a <code>## Shared Instructions</code> heading. Missing file = no change.</p>
+      <p>The file is re-read on every run, so edits take effect without restarting bots.</p>
+      <div class="code-block">
+        <div class="code-header">~/.botctl/AGENTS.md</div>
+        <div class="code-body">Don't use <span class="cm">sleep</span> in bash — use scheduled wakeups instead.
+Prefer <span class="cm">jq</span> over <span class="cm">python3</span> for parsing JSON.
+Combine commands with <span class="cm">&amp;&amp;</span> to save turns.
+Helper scripts live in <span class="cm">~/.agents/scripts/</span>.</div>
+      </div>
+      <p><strong>Keep it short.</strong> The content is sent on every run, on every bot. For anything large or task-specific, prefer <a href="#skills" style="color: var(--green);">skills</a> — they're loaded on-demand and don't pay the per-run token cost.</p>
+    </section>
+
     <!-- Workspaces -->
     <section class="docs-section" id="workspaces">
       <div class="section-label">Workspaces</div>
@@ -850,6 +866,7 @@ Installing skills from montanaflynn/agent-skills...
         <div class="code-header">~/.botctl/</div>
         <div class="code-body"><span class="cmd">data/</span>
   <span class="str">botctl.db</span>                  <span class="comment"># SQLite database (WAL mode)</span>
+<span class="key">AGENTS.md</span>                     <span class="comment"># Shared instructions (optional)</span>
 <span class="cmd">workspace/</span>                     <span class="comment"># Shared workspace</span>
 <span class="cmd">bots/</span>
   <span class="str">my-bot/</span>

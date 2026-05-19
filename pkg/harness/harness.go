@@ -3,7 +3,9 @@ package harness
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,14 +21,32 @@ import (
 	"github.com/montanaflynn/botctl/pkg/skills"
 )
 
-// loadAgentsFile reads the shared instructions file (~/.botctl/AGENTS.md) if present.
-// Returns the trimmed content, or "" if the file is missing, empty, or unreadable.
-func loadAgentsFile() string {
+// loadAgentsFile reads the shared instructions file (~/.botctl/AGENTS.md).
+// Missing file → ("", nil). Other read errors are returned so the caller can surface them.
+func loadAgentsFile() (string, error) {
 	data, err := os.ReadFile(paths.AgentsFile())
 	if err != nil {
-		return ""
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", err
 	}
-	return strings.TrimSpace(string(data))
+	return strings.TrimSpace(string(data)), nil
+}
+
+// buildSystemPrompt assembles the system prompt sent to the agent backend.
+func buildSystemPrompt(workspace, skillsLine string, maxTurns int, sharedInstructions string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "You are an autonomous agent managed by `botctl`.\nWorkspace directory: %s\n%s", workspace, skillsLine)
+	if maxTurns > 0 {
+		fmt.Fprintf(&b, "\nYou have a maximum of %d turns. Plan your work to complete within this limit.", maxTurns)
+	}
+	if sharedInstructions != "" {
+		b.WriteString("\n\n## Shared Instructions\n")
+		b.WriteString(sharedInstructions)
+	}
+	b.WriteString("\n\nYour full instructions are in the user message below. Follow them.")
+	return b.String()
 }
 
 // resolveWorkspace returns the workspace directory for a bot.
@@ -137,17 +157,15 @@ func runTask(botDir string, cfg *config.BotConfig, workspace string, runID int64
 	}
 	skillsLine := skills.FormatPrompt(skills.Discover(skillsDirs))
 
-	systemPrompt := fmt.Sprintf(
-		"You are an autonomous agent managed by `botctl`.\nWorkspace directory: %s\n%s",
-		workspace, skillsLine,
-	)
-	if cfg.MaxTurns > 0 {
-		systemPrompt += fmt.Sprintf("\nYou have a maximum of %d turns. Plan your work to complete within this limit.", cfg.MaxTurns)
+	shared, err := loadAgentsFile()
+	if err != nil {
+		msg := fmt.Sprintf("failed to read %s: %v", paths.AgentsFile(), err)
+		fmt.Printf("warning: %s\n", msg)
+		if database != nil && botID != "" {
+			database.InsertLogEntry(botID, runID, "warning", "", msg)
+		}
 	}
-	if shared := loadAgentsFile(); shared != "" {
-		systemPrompt += "\n\n## Shared Instructions\n" + shared
-	}
-	systemPrompt += "\n\nYour full instructions are in the user message below. Follow them."
+	systemPrompt := buildSystemPrompt(workspace, skillsLine, cfg.MaxTurns, shared)
 
 	opts := backend.Options{
 		SystemPrompt: systemPrompt,
@@ -309,9 +327,6 @@ func Run(botDir string, once bool, message string) error {
 
 	fmt.Printf("%s started at %s\n", name, time.Now().Format(time.RFC3339))
 	fmt.Printf("  workspace: %s\n", workspace)
-	if _, err := os.Stat(paths.AgentsFile()); err == nil {
-		fmt.Printf("  shared instructions: %s\n", paths.AgentsFile())
-	}
 
 	// Persistent wake handler — shared across sleep and run phases
 	// On Unix: listens for SIGUSR1; on Windows: listens on a named event
